@@ -1,0 +1,15 @@
+#ToolMaster
+CHNS Chainsaw Stihl
+LADW Ladder Werner
+JAKD Jackhammer DeWalt
+JAKR Jackhammer Ridgid
+#Tool
+CHNS 1 
+LADW 2
+JAKD 3
+JAKR 4
+#PricingProfile
+LADW 1.99 yes yes no
+CHNS 1.49 yes no yes
+JAKD 2.99 yes no no
+JAKR 2.99 yes no no
