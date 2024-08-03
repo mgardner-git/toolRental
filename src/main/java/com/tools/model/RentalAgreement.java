@@ -1,17 +1,25 @@
 package com.tools.model;
 
+import java.io.IOException;
+import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+
+import com.tools.service.RentalService;
+import com.tools.service.ToolMasterService;
 
 public class RentalAgreement {
 	
-	public static NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(); //TODO: Consider using BigDecimal instead
+	public static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(); //TODO: Consider using BigDecimal instead
+	public static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yy");
 	private Tool tool;
 	private LocalDate startDate;
 	private LocalDate endDate;
-	private int discount; //as a whoel number 0-100 (20=20% off)
-	private LocalDate checkoutDate;
+	private int discount; //as a whole number 0-100 (20=20% off)
+	private LocalDate checkoutDate;  //note that the checkout date is distinct from the begin date. Checkout date is when they pay for the agreement.
 	private double dailyCharge;
 	private int chargeDays; //count of chargeable days from day after checkout through and including due date, excluding "no chage" days as specified by the PricingProfile
 	private double preDiscountCharge;
@@ -27,11 +35,12 @@ public class RentalAgreement {
 		result.append("Tool Brand: " + tool.getToolMaster().getBrand() + "\n");
 		
 		result.append("Rental Days: " + getRentalDays()+ "\n");
-		result.append("Check out date: " + checkoutDate + "\n");
-		result.append("Due Date: " + endDate + "\n");
+		result.append("Check out date: " + DATE_FORMAT.format(checkoutDate) + "\n");
+		result.append("Begin date: " + DATE_FORMAT.format(startDate) + "\n");
+		result.append("Due Date: " + DATE_FORMAT.format(endDate) + "\n");
 		result.append("Daily Rental Charge: " + CURRENCY_FORMAT.format(dailyCharge) + "\n");
 		result.append("Charge Days: " + chargeDays + "\n");
-		result.append("Pre-discount charge: " + CURRENCY_FORMAT.format(chargeDays) + "\n");
+		result.append("Pre-discount charge: " + CURRENCY_FORMAT.format(preDiscountCharge) + "\n");
 		result.append("Discount percent: " + discount + "%\n");
 		result.append("Discount Amount: " + CURRENCY_FORMAT.format(discountAmount) + "\n");
 		result.append("Final Charge: " + CURRENCY_FORMAT.format(finalCharge) + "\n");
@@ -103,4 +112,15 @@ public class RentalAgreement {
 		this.finalCharge = finalCharge;
 	}
 
+	public static void main(String[] args) throws IOException {
+		ToolMasterService.loadToolMasters();
+		ToolMaster master = ToolMasterService.findToolMaster("JAKR");		
+		Tool tool = master.getTools().get(0);		
+
+		RentalAgreement result = RentalService.createRentalAgreement(tool, 
+				LocalDate.of(2020, 7,2), 
+				LocalDate.of(2020, 7,5),
+				50);
+		System.out.println(result);
+	}
 }
