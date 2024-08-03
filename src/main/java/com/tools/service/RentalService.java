@@ -13,13 +13,13 @@ import com.tools.model.ToolMaster;
 public class RentalService {
 
 	private static boolean isHoliday(LocalDate day) {
-		int year = LocalDate.now().getYear();
+		int year = day.getYear();
 		//if falls on weekend, it is observed on the closest weekday (If sat, then friday before, if Sunday, then Monday after)
-		LocalDate julyFour = LocalDate.of(year, 6,4);
+		LocalDate julyFour = LocalDate.of(year, 7,4);
 		if (julyFour.getDayOfWeek().equals(DayOfWeek.SATURDAY)) {
-			julyFour = LocalDate.of(year, 6, 3);
+			julyFour = LocalDate.of(year, 7, 3);
 		} else if (julyFour.getDayOfWeek().equals(DayOfWeek.SUNDAY)) {
-			julyFour = LocalDate.of(year,  6, 5);
+			julyFour = LocalDate.of(year,  7, 5);
 		}
 		if (day.equals(julyFour)) {
 			return true;
@@ -43,31 +43,46 @@ public class RentalService {
 	
 	public static RentalAgreement createRentalAgreement(Tool tool, LocalDate startDate, LocalDate endDate, int discount) {
 		
+		if (! startDate.isBefore(endDate)) {
+			throw new IllegalArgumentException("End date must be after start date");
+		}
+		if (discount < 0 || discount > 100) {
+			throw new IllegalArgumentException("discount must be between 1 and 100");
+		}
 		ToolMaster master = ToolMasterService.findToolMaster(tool.getToolMaster().getToolCode());
 		PricingProfile pricing = master.getPricingProfile();
 		
-		RentalAgreement ra = new RentalAgreement();
+		RentalAgreement ra = new RentalAgreement();		
 		ra.setPreDiscountCharge(0);
-		
+		ra.setChargeDays(0);
 		startDate.datesUntil(endDate.plusDays(1)).forEach((d) -> {
 			if (isHoliday(d)) {
 				if (pricing.isHolidayCharge()) {
 					ra.setPreDiscountCharge (ra.getPreDiscountCharge() + pricing.getDailyCharge());
+					ra.setChargeDays(ra.getChargeDays() +1);
 				}
+				
 			} else if (isWeekend(d)) {
 				if (pricing.isWeekendCharge()) {
 					ra.setPreDiscountCharge (ra.getPreDiscountCharge() + pricing.getDailyCharge());
+					ra.setChargeDays(ra.getChargeDays() +1);
 				}
 			} else if (isWeekday(d)) {
 				if (pricing.isWeekdayCharge()) {
 					ra.setPreDiscountCharge (ra.getPreDiscountCharge() + pricing.getDailyCharge());
+					ra.setChargeDays(ra.getChargeDays() +1);
 				}
 			}
 		});
-
-		
-		
-		
+		ra.setStartDate(startDate);
+		ra.setEndDate(endDate);
+		ra.setTool(tool);
+		ra.setDailyCharge(pricing.getDailyCharge());
+		ra.setDiscount(discount);
+		double discountRatio = ((double)discount)/100;		
+		ra.setDiscountAmount(ra.getPreDiscountCharge() * discountRatio);
+		ra.setFinalCharge(ra.getPreDiscountCharge()-ra.getDiscountAmount());		
+		ra.setCheckoutDate(LocalDate.now());
 		return ra;
 		
 	}

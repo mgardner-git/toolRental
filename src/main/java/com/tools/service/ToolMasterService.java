@@ -53,9 +53,9 @@ public class ToolMasterService {
 			PricingProfile prof = new PricingProfile();
 			ToolMaster master  = findToolMaster(splitter.nextToken());
 			prof.setDailyCharge(Double.parseDouble(splitter.nextToken()));
-			prof.setWeekdayCharge(splitter.nextToken().equals("Yes"));
-			prof.setWeekendCharge(splitter.nextToken().equals("Yes"));
-			prof.setHolidayCharge(splitter.nextToken().equals("Yes"));
+			prof.setWeekdayCharge(splitter.nextToken().equals("yes"));
+			prof.setWeekendCharge(splitter.nextToken().equals("yes"));
+			prof.setHolidayCharge(splitter.nextToken().equals("yes"));
 			master.setPricingProfile(prof);
 			line = br.readLine();
 					

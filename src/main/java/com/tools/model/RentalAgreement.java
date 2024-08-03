@@ -1,8 +1,12 @@
 package com.tools.model;
 
+import java.text.NumberFormat;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 
 public class RentalAgreement {
+	
+	public static NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(); //TODO: Consider using BigDecimal instead
 	private Tool tool;
 	private LocalDate startDate;
 	private LocalDate endDate;
@@ -11,15 +15,38 @@ public class RentalAgreement {
 	private double dailyCharge;
 	private int chargeDays; //count of chargeable days from day after checkout through and including due date, excluding "no chage" days as specified by the PricingProfile
 	private double preDiscountCharge;
-	private int discountPercent;
+	
 	private double discountAmount;
 	private double finalCharge; //pre-discount charge - discount amount
 	
+	
+	public String toString() {
+		StringBuffer result = new StringBuffer();
+		result.append("Tool Code: " + tool.getToolMaster().getToolCode() + "\n");
+		result.append("Tool Type: " + tool.getToolMaster().getToolType() + "\n");
+		result.append("Tool Brand: " + tool.getToolMaster().getBrand() + "\n");
+		
+		result.append("Rental Days: " + getRentalDays()+ "\n");
+		result.append("Check out date: " + checkoutDate + "\n");
+		result.append("Due Date: " + endDate + "\n");
+		result.append("Daily Rental Charge: " + CURRENCY_FORMAT.format(dailyCharge) + "\n");
+		result.append("Charge Days: " + chargeDays + "\n");
+		result.append("Pre-discount charge: " + CURRENCY_FORMAT.format(chargeDays) + "\n");
+		result.append("Discount percent: " + discount + "%\n");
+		result.append("Discount Amount: " + CURRENCY_FORMAT.format(discountAmount) + "\n");
+		result.append("Final Charge: " + CURRENCY_FORMAT.format(finalCharge) + "\n");
+		return result.toString();
+		
+	}
 	public Tool getTool() {
 		return tool;
 	}
 	public void setTool(Tool tool) {
 		this.tool = tool;
+	}
+	
+	public int getRentalDays() {
+		return (int)startDate.until(endDate, ChronoUnit.DAYS)+1; 
 	}
 	public LocalDate getStartDate() {
 		return startDate;
@@ -62,12 +89,6 @@ public class RentalAgreement {
 	}
 	public void setPreDiscountCharge(double preDiscountCharge) {
 		this.preDiscountCharge = preDiscountCharge;
-	}
-	public int getDiscountPercent() {
-		return discountPercent;
-	}
-	public void setDiscountPercent(int discountPercent) {
-		this.discountPercent = discountPercent;
 	}
 	public double getDiscountAmount() {
 		return discountAmount;
