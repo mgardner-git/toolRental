@@ -20,7 +20,7 @@ class TestScenarios {
 	public void setup() throws IOException {
 		ToolMasterService.loadToolMasters();
 	}
-	/*
+	
 	@Test
 	void testScenario1() {
 		ToolMaster master = ToolMasterService.findToolMaster("JAKR");
@@ -74,7 +74,7 @@ class TestScenarios {
 		assertEquals("CHNS", result.getTool().getToolMaster().getToolCode());			
 		
 	}
-	*/
+	
 	@Test
 	void testScenario4() {
 		ToolMaster master = ToolMasterService.findToolMaster("JAKD");		

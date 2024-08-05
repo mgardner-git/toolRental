@@ -9,6 +9,7 @@ import com.tools.model.PricingProfile;
 import com.tools.model.RentalAgreement;
 import com.tools.model.Tool;
 import com.tools.model.ToolMaster;
+import com.tools.model.ToolStatus;
 
 public class RentalService {
 
@@ -42,7 +43,9 @@ public class RentalService {
 	}
 	
 	public static RentalAgreement createRentalAgreement(Tool tool, LocalDate startDate, LocalDate endDate, int discount) {
-		
+		/**
+		 * TODO: Need to check if this tool is already rented during the given period.
+		 */
 		if (! startDate.isBefore(endDate)) {
 			throw new IllegalArgumentException("End date must be after start date");
 		}
@@ -83,7 +86,19 @@ public class RentalService {
 		ra.setDiscountAmount(ra.getPreDiscountCharge() * discountRatio);
 		ra.setFinalCharge(ra.getPreDiscountCharge()-ra.getDiscountAmount());		
 		ra.setCheckoutDate(LocalDate.now());
-		return ra;
-		
+		return ra;		
+	}
+	
+	public static void checkoutTool(Tool tool, RentalAgreement ra) {
+		if (tool.getCurrentStatus() != ToolStatus.ONSHELF) {
+			throw new IllegalArgumentException("Tool # " + tool.getSerialNumber() + " is not on the shelf");
+			//TODO: See if there is another rental agreement, or another customer that has recently checked out this tool
+		}
+		else if (!ra.getStartDate().equals(LocalDate.now())) {
+			throw new IllegalArgumentException("The start date for tool# " + tool.getSerialNumber() + " is " + ra.getStartDate());
+		} else {
+			tool.setCurrentStatus(ToolStatus.RENTED);
+			//TODO: Do we need a status element on the rental agreement?
+		}
 	}
 }

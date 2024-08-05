@@ -2,7 +2,11 @@ package com.tools.model;
 
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * A ToolMaster is a brand and make/type of tool from a particular brand.
+ * @author User
+ *
+ */
 public class ToolMaster {
 
 	private String toolCode;
