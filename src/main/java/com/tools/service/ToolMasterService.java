@@ -4,6 +4,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -13,10 +18,10 @@ import com.tools.model.Tool;
 import com.tools.model.ToolMaster;
 import com.tools.model.ToolStatus;
 
-public class ToolMasterService {
+public class ToolMasterService extends DataService {
 
 	private static List<ToolMaster> toolMasters;
-	
+	/*
 	public static void loadToolMasters() throws IOException {
 		toolMasters = new ArrayList<ToolMaster>();
 		File file = new File("database.txt");		
@@ -62,19 +67,35 @@ public class ToolMasterService {
 		
 		br.close();
 	}
+	*/
 	
-	public static ToolMaster findToolMaster(String toolCode) {
-		for (ToolMaster checkMaster: toolMasters) {
-			if (checkMaster.getToolCode().equals(toolCode)) {
-				return checkMaster;
-			}
+	public static ToolMaster findToolMaster(String toolCode) throws SQLException{
+		Connection con = getConnection();
+		
+		String query = "select M.toolCode, toolType, dailyCharge, weekdayCharge, weekendCharge, holidayCharge from ToolMaster M inner join PricingProfile P on M.toolCode = P.toolCode where M.toolCode=?";
+		PreparedStatement statement = con.prepareStatement(query);
+		statement.setString(1, toolCode);
+		ResultSet results = statement.executeQuery();
+		if (results.next()) {
+			ToolMaster master = new ToolMaster();
+			master.setToolCode(results.getString("toolCode"));
+			master.setToolType(results.getString("toolType"));
+			PricingProfile pricing = new PricingProfile();
+			pricing.setDailyCharge(results.getDouble("dailyCharge"));
+			pricing.setWeekdayCharge(results.getBoolean("weekdayCharge"));
+			pricing.setWeekendCharge(results.getBoolean("weekendCharge"));
+			pricing.setHolidayCharge(results.getBoolean("holidayCharge"));
+			master.setPricingProfile(pricing);
+			
+			return master;
+		} else {
+			return null; //not found
 		}
-		return null;
 	}
 	
 
-	public static void main(String[] args) throws IOException{
-		loadToolMasters();
+	public static void main(String[] args) throws Exception{
+		//loadToolMasters();
 		ToolMaster result = findToolMaster("CHNS");
 		System.out.println(result);
 		ToolMaster result2 = findToolMaster("---");

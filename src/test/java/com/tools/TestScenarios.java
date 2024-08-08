@@ -3,6 +3,7 @@ package com.tools;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,19 +14,18 @@ import com.tools.model.Tool;
 import com.tools.model.ToolMaster;
 import com.tools.service.RentalService;
 import com.tools.service.ToolMasterService;
+import com.tools.service.ToolsService;
 
 class TestScenarios {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		ToolMasterService.loadToolMasters();
+		//ToolMasterService.loadToolMasters();
 	}
 	
 	@Test
-	void testScenario1() {
-		ToolMaster master = ToolMasterService.findToolMaster("JAKR");
-		assertNotNull(master);
-		Tool tool = master.getTools().get(0);
+	void testScenario1() throws SQLException {
+		Tool tool = ToolsService.getToolsByToolCode("JAKR").get(0);
 		assertEquals("4",tool.getSerialNumber());
 		assertThrows(Exception.class, () -> {
 			RentalService.createRentalAgreement(tool, 
@@ -36,10 +36,8 @@ class TestScenarios {
 	}
 	
 	@Test
-	void testScenario2() {
-		ToolMaster master = ToolMasterService.findToolMaster("LADW");
-		assertNotNull(master);
-		Tool tool = master.getTools().get(0);		
+	void testScenario2() throws SQLException {			
+		Tool tool = ToolsService.getToolsByToolCode("LADW").get(0);				
 		//in 2008, 4jul falls on Friday
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2020, 7, 2), 
@@ -56,10 +54,8 @@ class TestScenarios {
 	}
 	
 	@Test
-	void testScenario3() {
-		
-		ToolMaster master = ToolMasterService.findToolMaster("CHNS");		
-		Tool tool = master.getTools().get(0);		
+	void testScenario3() throws SQLException{
+		Tool tool = ToolsService.getToolsByToolCode("CHNS").get(0);				
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2015, 7,2), 
 				LocalDate.of(2015, 7,6),
@@ -76,10 +72,9 @@ class TestScenarios {
 	}
 	
 	@Test
-	void testScenario4() {
-		ToolMaster master = ToolMasterService.findToolMaster("JAKD");		
-		Tool tool = master.getTools().get(0);		
-
+	void testScenario4() throws SQLException {		
+		Tool tool = ToolsService.getToolsByToolCode("JAKD").get(0);
+		
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2015, 9,3), 
 				LocalDate.of(2015, 9,8),
@@ -95,9 +90,8 @@ class TestScenarios {
 	}
 	
 	@Test
-	void testScenario5() {
-		ToolMaster master = ToolMasterService.findToolMaster("JAKR");		
-		Tool tool = master.getTools().get(0);		
+	void testScenario5() throws SQLException {		
+		Tool tool = ToolsService.getToolsByToolCode("JAKR").get(0);				
 
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2015, 7,2), 
@@ -114,10 +108,8 @@ class TestScenarios {
 	}
 	
 	@Test
-	void testScenario6() {
-		ToolMaster master = ToolMasterService.findToolMaster("JAKR");		
-		Tool tool = master.getTools().get(0);		
-
+	void testScenario6() throws SQLException {
+		Tool tool = ToolsService.getToolsByToolCode("JAKR").get(0);
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2020, 7,2), 
 				LocalDate.of(2020, 7,5),

@@ -3,6 +3,7 @@ package com.tools;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 
 import org.junit.Before;
@@ -14,19 +15,20 @@ import com.tools.model.Tool;
 import com.tools.model.ToolMaster;
 import com.tools.service.RentalService;
 import com.tools.service.ToolMasterService;
+import com.tools.service.ToolsService;
 
 class HolidayTest {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		ToolMasterService.loadToolMasters();
+		//ToolMasterService.loadToolMasters();
 	}
 	@Test
-	void test() {
+	void test() throws SQLException{
 		
-		ToolMaster master = ToolMasterService.findToolMaster("LADW");
-		assertNotNull(master);
-		Tool tool = master.getTools().get(0);
+		
+		Tool tool = ToolsService.getToolsByToolCode("LADW").get(0);	
+		
 		assertEquals("2",tool.getSerialNumber());
 		//in 2008, 4jul falls on Friday
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
@@ -51,10 +53,9 @@ class HolidayTest {
 	}
 	
 	@Test
-	void testSaturday() {
-		ToolMaster master = ToolMasterService.findToolMaster("LADW");
-		assertNotNull(master);
-		Tool tool = master.getTools().get(0);
+	void testSaturday() throws SQLException {
+		
+		Tool tool = ToolsService.getToolsByToolCode("LADW").get(0);		
 		assertEquals("2",tool.getSerialNumber());
 		//in 2009, 4jul falls on Saturday, so the 3rd would count as Holiday and not be charged
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
@@ -66,9 +67,9 @@ class HolidayTest {
 	}
 	
 	@Test
-	void testSunday() {
-		ToolMaster master = ToolMasterService.findToolMaster("LADW");		
-		Tool tool = master.getTools().get(0);
+	void testSunday() throws SQLException{
+				
+		Tool tool = ToolsService.getToolsByToolCode("LADW").get(0);
 		//in 2004, 4jul falls on Sunday, so the 5th would count as Holiday and not be charged
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2004, 7, 5), 
@@ -78,9 +79,9 @@ class HolidayTest {
 	}
 	
 	@Test
-	void testLaborDay() {
-		ToolMaster master = ToolMasterService.findToolMaster("LADW");		
-		Tool tool = master.getTools().get(0);
+	void testLaborDay() throws SQLException {
+		Tool tool = ToolsService.getToolsByToolCode("LADW").get(0);		
+
 		//in 2024, Labor day falls on Sep 2
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2024, 9, 1), 
@@ -89,9 +90,9 @@ class HolidayTest {
 	}
 	
 	@Test 
-	void testNoHolidays() {
-		ToolMaster master = ToolMasterService.findToolMaster("LADW");
-		Tool tool = master.getTools().get(0);
+	void testNoHolidays() throws SQLException {
+		
+		Tool tool = ToolsService.getToolsByToolCode("LADW").get(0);
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2024,  1, 1),
 				LocalDate.of(2024, 1, 4),0);
@@ -99,9 +100,9 @@ class HolidayTest {
 	}
 	
 	@Test
-	void testWeekend() {
-		ToolMaster master = ToolMasterService.findToolMaster("CHNS");
-		Tool tool = master.getTools().get(0);
+	void testWeekend() throws SQLException {
+		
+		Tool tool = ToolsService.getToolsByToolCode("CHNS").get(0);
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2024,  8, 2),
 				LocalDate.of(2024, 8, 3),0);

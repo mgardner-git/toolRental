@@ -1,5 +1,10 @@
 package com.tools.service;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -10,7 +15,7 @@ import com.tools.model.Tool;
 import com.tools.model.ToolMaster;
 import com.tools.model.ToolStatus;
 
-public class RentalService {
+public class RentalService extends DataService {
 
 	private static boolean isHoliday(LocalDate day) {
 		int year = day.getYear();
@@ -41,7 +46,7 @@ public class RentalService {
 		return !isWeekend(day);
 	}
 	
-	public static RentalAgreement createRentalAgreement(Tool tool, LocalDate startDate, LocalDate endDate, int discount) {
+	public static RentalAgreement createRentalAgreement(Tool tool, LocalDate startDate, LocalDate endDate, int discount)throws SQLException {
 		/**
 		 * TODO: Need to check if this tool is already rented during the given period.
 		 */
@@ -51,10 +56,14 @@ public class RentalService {
 		if (discount < 0 || discount > 100) {
 			throw new IllegalArgumentException("discount must be between 1 and 100");
 		}
+		if (!isAvailable(tool.getSerialNumber(), startDate, endDate)) {
+			throw new IllegalArgumentException("Tool #" + tool.getSerialNumber() + " is rented during that period.");
+		}
 		ToolMaster master = ToolMasterService.findToolMaster(tool.getToolMaster().getToolCode());
 		PricingProfile pricing = master.getPricingProfile();
 		
-		RentalAgreement ra = new RentalAgreement();		
+		RentalAgreement ra = new RentalAgreement();	
+		ra.setCreateDate(LocalDate.now());
 		ra.setPreDiscountCharge(0);
 		ra.setChargeDays(0);
 		startDate.datesUntil(endDate.plusDays(1)).forEach((d) -> {
@@ -88,16 +97,99 @@ public class RentalService {
 		return ra;		
 	}
 	
-	public static void checkoutTool(Tool tool, RentalAgreement ra) {
+
+	
+	/**
+	 * Returns true if and only if there are no rentalAgreements for the given tool that intersect the given date range
+	 * @param serialNumber
+	 * @param beingDate
+	 * @param endDate
+	 * @return
+	 */
+	public static boolean isAvailable(String serialNumber, LocalDate beginDate, LocalDate endDate) throws SQLException {
+		Connection con = getConnection();
+		
+		String query = "select startDate, endDate from rentalagreement where serialNumber = ?";
+		PreparedStatement statement = con.prepareStatement(query);
+		statement.setString(1,  serialNumber);		
+		ResultSet results = statement.executeQuery();
+		while (results.next()) {
+			LocalDate rentalBegin = results.getObject(1, LocalDate.class);
+			LocalDate rentalEnd = results.getObject(2, LocalDate.class);
+			
+			if ( (rentalEnd.isAfter(beginDate) && rentalEnd.isBefore(endDate)) ||
+				 (rentalBegin.isAfter(beginDate) &&  rentalBegin.isBefore(endDate))
+				) {
+				return false;
+			}
+		} 
+		return true;
+	}
+	public static void saveRentalAgreement(RentalAgreement ra) throws SQLException {
+		Connection con = getConnection();
+		
+		String update = "insert into rentalagreement (startDate,endDate,checkoutDate, createDate, discount, dailyCharge, chargeDays, preDiscountCharge, serialNumber, customer) VALUES (?,?,?,?,?,?,?,?,?,?)";
+		PreparedStatement statement = con.prepareStatement(update);
+		statement.setDate(1,  java.sql.Date.valueOf(ra.getStartDate()));
+		statement.setDate(2,  java.sql.Date.valueOf(ra.getEndDate()));
+		statement.setDate(3,  java.sql.Date.valueOf(ra.getCheckoutDate()));
+		statement.setDate(4, java.sql.Date.valueOf(ra.getCreateDate()));
+		statement.setInt(5, ra.getDiscount());
+		statement.setDouble(6,  ra.getDailyCharge());
+		statement.setInt(7,  ra.getChargeDays());
+		statement.setDouble(8,  ra.getPreDiscountCharge());
+		statement.setString(9, ra.getTool().getSerialNumber());
+		statement.setString(10, ra.getCustomer());
+		statement.executeUpdate();		
+	}
+	
+	public static void checkoutTool(Tool tool, RentalAgreement ra) throws SQLException {
 		if (tool.getCurrentStatus() != ToolStatus.ONSHELF) {
 			throw new IllegalArgumentException("Tool # " + tool.getSerialNumber() + " is not on the shelf");
 			//TODO: See if there is another rental agreement, or another customer that has recently checked out this tool
 		}
-		else if (!ra.getStartDate().equals(LocalDate.now())) {
+		//!ra.getStartDate().isAfter(LocalDate.now())) {
+		else if (LocalDate.now().isBefore(ra.getStartDate())) {				
 			throw new IllegalArgumentException("The start date for tool# " + tool.getSerialNumber() + " is " + ra.getStartDate());
 		} else {
 			tool.setCurrentStatus(ToolStatus.RENTED);
-			//TODO: Do we need a status element on the rental agreement?
+			ra.setCheckoutDate(LocalDate.now());
+			ToolsService.updateStatus(tool);
+			updateCheckinCheckout(ra);
 		}
 	}
+	
+	public static void checkinTool(Tool tool, RentalAgreement ra) throws SQLException{
+		
+		if (LocalDate.now().isAfter(ra.getEndDate())) {
+			//TODO: What to do with late checkins
+		} else {
+			tool.setCurrentStatus(ToolStatus.ONSHELF);
+			ra.setCheckinDate(LocalDate.now());
+			ToolsService.updateStatus(tool);
+			updateCheckinCheckout(ra);
+		}
+	}
+	
+	private static java.sql.Date convertToSqlDate(LocalDate ld) {
+		if (ld == null) {
+			return null;
+		} else {
+			return java.sql.Date.valueOf(ld);
+		}
+	}
+	private static void updateCheckinCheckout(RentalAgreement ra) throws SQLException {
+		Connection con =  getConnection();
+		
+		String update = "update rentalagreement set checkinDate=?, checkoutDate=? where id=?";		
+		PreparedStatement statement = con.prepareStatement(update);
+		statement.setDate(1, convertToSqlDate(ra.getCheckinDate()));
+		statement.setDate(2, convertToSqlDate(ra.getCheckoutDate()));
+		statement.setInt(3, ra.getId());
+		
+		statement.executeUpdate();
+
+	}
+	
+
 }

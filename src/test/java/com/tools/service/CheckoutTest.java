@@ -3,6 +3,7 @@ package com.tools.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.time.LocalDate;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -17,13 +18,15 @@ class CheckoutTest {
 
 	@BeforeEach
 	public void setup() throws IOException {
-		ToolMasterService.loadToolMasters();
+		
 	}
 	
 	@Test
-	void test() {
-		ToolMaster master = ToolMasterService.findToolMaster("JAKD");		
-		Tool tool = master.getTools().get(0);		
+	void test() throws Exception {
+				
+		Tool tool = ToolsService.getToolsByToolCode("JAKD").get(0);
+		ToolMaster master = ToolMasterService.findToolMaster("JAKD");
+		tool.setToolMaster(master);
 		assertEquals(ToolStatus.ONSHELF, tool.getCurrentStatus());
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.now(), 
@@ -34,8 +37,31 @@ class CheckoutTest {
 		
 		assertThrows(Exception.class, () -> {
 			RentalService.checkoutTool(tool, result);
-		});		
+		});
+	}
+	
+	@Test
+	void checkTestAvailability() throws SQLException {
+				
+		Tool tool = ToolsService.getToolsByToolCode("LADW").get(0);
+		ToolMaster master = ToolMasterService.findToolMaster("LADW");
+		tool.setToolMaster(master);
 
+		assertThrows(Exception.class, () -> {
+			 RentalService.createRentalAgreement(tool, 
+					LocalDate.of(2024, 8, 4),
+					LocalDate.of(2024,8,8),
+					0);			
+		});
+		
+		RentalAgreement result2 = RentalService.createRentalAgreement(tool, 
+				LocalDate.of(2023, 8, 4),
+				LocalDate.of(2023,8,8),
+				0);
+		boolean available =  RentalService.isAvailable(tool.getSerialNumber(), result2.getStartDate(), result2.getEndDate());
+		assertTrue(available);
+		
+		
 	}
 
 }

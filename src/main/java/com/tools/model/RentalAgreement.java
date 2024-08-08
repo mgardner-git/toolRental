@@ -10,24 +10,29 @@ import java.time.temporal.ChronoUnit;
 
 import com.tools.service.RentalService;
 import com.tools.service.ToolMasterService;
+import com.tools.service.ToolsService;
 
 public class RentalAgreement {
 	
 	public static final NumberFormat CURRENCY_FORMAT = NumberFormat.getCurrencyInstance(); //TODO: Consider using BigDecimal instead
 	public static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MM/dd/yy");
-	private Tool tool;
-	private LocalDate startDate;
-	private LocalDate endDate;
+	private int id;
+	private Tool tool;	
+	private LocalDate createDate; //the day the contract was signed and paid for
+	private LocalDate startDate;  //the day the rental is expected to begin
+	private LocalDate endDate;  //the day the rental is expected to end
 	private int discount; //as a whole number 0-100 (20=20% off)
-	private LocalDate checkoutDate;  //note that the checkout date is distinct from the begin date. Checkout date is when they pay for the agreement.
+	private LocalDate checkoutDate;  //note that the checkout date is distinct from the begin date. Checkout date is when they actually take it out
+	private LocalDate checkinDate; //the day the tool was returned
 	private double dailyCharge;
 	private int chargeDays; //count of chargeable days from day after checkout through and including due date, excluding "no chage" days as specified by the PricingProfile
 	private double preDiscountCharge;
 	
 	private double discountAmount;
 	private double finalCharge; //pre-discount charge - discount amount
+	private String customer; //link to the customer table
 	
-	
+
 	public String toString() {
 		StringBuffer result = new StringBuffer();
 		result.append("Tool Code: " + tool.getToolMaster().getToolCode() + "\n");
@@ -44,9 +49,37 @@ public class RentalAgreement {
 		result.append("Discount percent: " + discount + "%\n");
 		result.append("Discount Amount: " + CURRENCY_FORMAT.format(discountAmount) + "\n");
 		result.append("Final Charge: " + CURRENCY_FORMAT.format(finalCharge) + "\n");
-		return result.toString();
-		
+		return result.toString();		
 	}
+	
+	
+	
+	public int getId() {
+		return id;
+	}
+
+
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
+
+
+	public String getCustomer() {
+		return customer;
+	}
+	public void setCustomer(String customer) {
+		this.customer = customer;
+	}
+	public LocalDate getCheckinDate() {
+		return checkinDate;
+	}
+
+	public void setCheckinDate(LocalDate checkinDate) {
+		this.checkinDate = checkinDate;
+	}
+
 	public Tool getTool() {
 		return tool;
 	}
@@ -57,6 +90,18 @@ public class RentalAgreement {
 	public int getRentalDays() {
 		return (int)startDate.until(endDate, ChronoUnit.DAYS)+1; 
 	}
+	public LocalDate getCreateDate() {
+		return createDate;
+	}
+
+
+
+	public void setCreateDate(LocalDate createDate) {
+		this.createDate = createDate;
+	}
+
+
+
 	public LocalDate getStartDate() {
 		return startDate;
 	}
@@ -112,10 +157,10 @@ public class RentalAgreement {
 		this.finalCharge = finalCharge;
 	}
 
-	public static void main(String[] args) throws IOException {
-		ToolMasterService.loadToolMasters();
-		ToolMaster master = ToolMasterService.findToolMaster("JAKR");		
-		Tool tool = master.getTools().get(0);		
+	public static void main(String[] args) throws Exception {
+		//ToolMasterService.loadToolMasters();
+				
+		Tool tool = ToolsService.getTool("4");		
 
 		RentalAgreement result = RentalService.createRentalAgreement(tool, 
 				LocalDate.of(2020, 7,2), 
